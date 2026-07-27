@@ -1,0 +1,2 @@
+ssh root@193.168.3.217
+rU-M9d-Ue26XSQ

@@ -2,17 +2,14 @@
 # 1. Зависимости и служебные файлы Node.js
 # ----------------------------------------------------------------------
 /node_modules
-/nginx
-nginx/
+# /nginx
+# nginx/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .npm
 .eslintcache
 
-# ----------------------------------------------------------------------
-# 2. Файлы, генерируемые TypeScript и Docker
-# ----------------------------------------------------------------------
 /dist                     # Скомпилированный JavaScript код (целевая папка из tsconfig.json)
 /.tsbuildinfo
 *.js.map                  # Source maps
