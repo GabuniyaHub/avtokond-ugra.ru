@@ -11,8 +11,20 @@ const server = http.createServer( async (request, response) => {
 
     if ( request.method === "GET" && request.url === '/api/v1/bus-data') {
         try {
-            const stmt = Database.prepare('SELECT * FROM buses ORDER BY datetime DESC');
-            const data =stmt.all();
+            const stmt = Database.prepare(`
+            SELECT 
+                id, 
+                model, 
+                category, 
+                datetime, 
+                owner, 
+                reg_number as regNumber,
+                created_at as createdAt,
+                updated_at as updatedAt
+            FROM buses 
+            ORDER BY datetime DESC
+            `);
+            const data = stmt.all();
 
             response.writeHead(200, {
                 'Content-Type': 'application/json',
@@ -42,20 +54,3 @@ const server = http.createServer( async (request, response) => {
 server.listen(4080, 'localhost', () => {
     console.log("The server start listening on port 4080.");
 });
-
-// [
-//     {
-//         "model": "МАЗ-206",
-//         "category": "M3",
-//         "datetime": "2026-07-27T14:30",
-//         "owner": "ООО «Автоконд»",
-//         "regNumber": "А123ВС 86"
-//     },
-//     {
-//         "model": "ПАЗ-3205",
-//         "category": "M2",
-//         "datetime": "2026-07-27T15:00",
-//         "owner": "ИП Иванов",
-//         "regNumber": "В789ХР 86"
-//     }
-// ]
