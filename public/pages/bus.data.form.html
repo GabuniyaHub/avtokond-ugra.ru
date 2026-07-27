@@ -156,7 +156,7 @@
 
             <div class="flex justify-between items-center mb-6 header-flex">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-800">📋 Список автобусов</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">Список автобусов</h2>
                     <p class="text-sm text-gray-500 mt-1">Все записи из системы</p>
                 </div>
                 <button id="refreshBtn" class="btn-refresh text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow-md transition">
@@ -258,7 +258,7 @@
                 }
 
                 try {
-                    const response = await fetch('http://localhost/api/v1/bus-data');
+                    const response = await fetch('/api/v1/bus-data');
                     
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}`);
