@@ -59,12 +59,6 @@ avtokond-ugra.ru/
 │   ├── js/forms.js              # Обработка форм
 │   └── pages/                    # Другие страницы
 │
-├── 📚 ДОКУМЕНТАЦИЯ
-│   ├── QUICKSTART.md
-│   ├── BACKEND_README.md
-│   ├── API_EXAMPLES.md
-│   ├── DEPLOYMENT.md
-│   └── ...
 │
 ├── package.json                  # Зависимости npm
 ├── tsconfig.json                 # Конфигурация TypeScript
@@ -73,6 +67,20 @@ avtokond-ugra.ru/
 └── Dockerfile                    # Образ для контейнера
 ```
 
+```bash
+*Пример .env
+# База данных
+DB_USER=
+DB_PASSWORD=
+# Секрет для генерации JWT токенов 
+JWT_SECRET=
+PORT=
+
+# Настройки почты
+EMAIL_USER=
+EMAIL_PASS=
+EMAIL_TO=
+```
 ---
 
 

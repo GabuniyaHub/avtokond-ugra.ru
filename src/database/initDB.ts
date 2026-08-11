@@ -1,10 +1,17 @@
 import { DatabaseSync } from 'node:sqlite';
+import path from 'node:path';
+import url from 'node:url';
 
-const Database = new DatabaseSync('./database/database.sqlite');
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dbPath = path.join(__dirname, 'database.sqlite');
 
-function initDB() {
-    Database.exec(` 
-        CREATE TABLE IF NOT EXISTS buses (
+export const Database = new DatabaseSync(dbPath);
+
+export async function inicializationDB(): Promise<void> {
+    try {
+        Database.exec(` 
+            CREATE TABLE IF NOT EXISTS buses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             model VARCHAR(100) NOT NULL,
             category VARCHAR(10) NOT NULL,
@@ -19,7 +26,9 @@ function initDB() {
         CREATE INDEX IF NOT EXISTS idx_buses_reg_number ON buses(reg_number);
         CREATE INDEX IF NOT EXISTS idx_buses_owner ON buses(owner);
         `);
-        console.log('The database is created.')
+        console.log('Database initialized successfully.');
+    } catch ( error ) {
+        console.error('Failed to initialize database:', error);
+        throw error;
+    }
 }
-
-export { Database, initDB };
