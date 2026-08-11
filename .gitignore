@@ -9,7 +9,7 @@ yarn-error.log*
 /node_modules
 .env
 .env.*
-database.sqlite
+src/database/database.sqlite
 *.sqlite
 *.sqlite3
 *.db
