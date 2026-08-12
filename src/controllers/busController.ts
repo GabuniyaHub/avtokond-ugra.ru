@@ -2,7 +2,7 @@ import http from 'node:http';
 import { busService } from '../services/busService.js'
 export async function getBusData(req: http.IncomingMessage, res: http.ServerResponse) {
      try {
-            const data = await busService.getAllBus();
+            const data = busService.getAllBus();
             res
             .writeHead(200, { 'Content-Type': 'application/json'})
             .end(JSON.stringify(data));
