@@ -11,20 +11,39 @@
 ### За 5 минут до первого запуска:
 
 ```bash
-# 1. Установить зависимости
+# 1. Клонировать репозиторий
+git clone https://github.com/GabuniyaHub/avtokond-ugra.ru.git
+
+# 2. Установить зависимости
+# Основные зависимости (из package.json)
 npm install
+#  TypeScript и типы (для разработки)
+npm install --save-dev typescript @types/node tsx
 
-# 2. Настроить .env файл (заполнить переменные окружения)
-# Просто отредактируйте файл .env
+# 3. Настроить .env файл (заполнить переменные окружения)
+# отредактируйте файл .env
+# NODE_ENV=production
+# PORT=4080
+# DATABASE_URL=file:/var/www/avtokond-ugra.ru/dist/database/database.sqlite
 
-# 3. Инициализировать БД
-npm run prisma:migrate
+# 4. Скомпилировать TypeScript
+npm run build
 
-# 4. Запустить сервер
+# 5. Создать папку для базы данных (если не создается автоматически)
+mkdir -p dist/database
+touch dist/database/database.sqlite
+
+# 6. Создать структуру таблиц (если не создается автоматически)
+# База создается при первом запуске сервера
+
+# 7. Запустить сервер (для разработки)
 npm run dev
+
+# ИЛИ для продакшена через systemd
+systemctl start avtokond-api
 ```
 
-✅ Сервер запустится на **http://localhost:3000**
+✅ Сервер запустится на **http://localhost:4080**
 
 
 ## 🛠 Стек технологий
