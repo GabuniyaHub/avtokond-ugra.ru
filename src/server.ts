@@ -11,7 +11,7 @@ const server = http.createServer( async (req: http.IncomingMessage, res: http.Se
     const isBusRouter = await router(req, res);
     if (isBusRouter) return ;
 
-    if (req.method === 'GET' && req.url === '/test') {
+    if (req.method === 'GET' && req.url === '/api/test') {
         try {
             const data = Database.prepare('SELECT * FROM buses').all();
             res.writeHead(200, { 'Content-Type': 'application/json' });
