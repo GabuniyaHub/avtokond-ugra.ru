@@ -10,19 +10,6 @@ const server = http.createServer( async (req: http.IncomingMessage, res: http.Se
    
     const isBusRouter = await router(req, res);
     if (isBusRouter) return ;
-
-    if (req.method === 'GET' && req.url === '/api/test') {
-        try {
-            const data = Database.prepare('SELECT * FROM buses').all();
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(data));
-            return;
-        } catch (err) {
-            res.writeHead(500);
-            res.end(JSON.stringify({ error: String(err) }));
-            return;
-        }
-    }
     
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));
