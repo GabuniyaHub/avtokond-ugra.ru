@@ -4,7 +4,7 @@ import { Database, inicializationDB } from './database/initDB.js';
 import { router } from './routes/busRouter.js';
 
 
-inicializationDB();
+await inicializationDB();
 
 const server = http.createServer( async (req: http.IncomingMessage, res: http.ServerResponse) => {
    
