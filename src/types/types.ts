@@ -8,3 +8,7 @@ export interface Buses {
     createdAt: string;
     updateUp: string;
 }
+
+export interface serveStatic {
+    
+}
