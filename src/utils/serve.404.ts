@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 export async function send404(res: http.ServerResponse, pagesDir: string ): Promise<void> {
     try {
         const errorPage = path.join(pagesDir, '404.html');
-        const content = fs.readFile(errorPage, 'utf-8');
+        const content = await fs.readFile(errorPage, 'utf-8');
         res
             .writeHead(404, {'Content-Type': 'text/html'})
             .end(content); 
