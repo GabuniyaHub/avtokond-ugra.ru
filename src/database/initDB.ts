@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import url from 'node:url';
+import crypto from 'node:crypto';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,25 +11,58 @@ export const Database = new DatabaseSync(dbPath);
 
 export async function inicializationDB(): Promise<void> {
     try {
-        Database.exec(` 
+        Database.exec(`
             CREATE TABLE IF NOT EXISTS buses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            model VARCHAR(100) NOT NULL,
-            category VARCHAR(10) NOT NULL,
-            datetime DATETIME NOT NULL,
-            owner VARCHAR(200) NOT NULL,
-            reg_number VARCHAR(20) NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                model VARCHAR(100) NOT NULL,
+                category VARCHAR(10) NOT NULL,
+                datetime DATETIME NOT NULL,
+                owner VARCHAR(200) NOT NULL,
+                reg_number VARCHAR(20) NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
 
-        CREATE INDEX IF NOT EXISTS idx_buses_datetime ON buses(datetime);
-        CREATE INDEX IF NOT EXISTS idx_buses_reg_number ON buses(reg_number);
-        CREATE INDEX IF NOT EXISTS idx_buses_owner ON buses(owner);
+            CREATE INDEX IF NOT EXISTS idx_buses_datetime ON buses(datetime);
+            CREATE INDEX IF NOT EXISTS idx_buses_reg_number ON buses(reg_number);
+            CREATE INDEX IF NOT EXISTS idx_buses_owner ON buses(owner);
+
+            CREATE TABLE IF NOT EXISTS admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_admins_username ON admins(username);
         `);
+
+        const adminExists = Database.prepare('SELECT COUNT(*) as count FROM admins').get() as { count: number };
+        
+        if (adminExists.count === 0) {
+            const defaultUsername = process.env.ADMIN_USERNAME || 'admin';
+            const defaultPassword = process.env.ADMIN_PASSWORD || 'avtokond';
+            const passwordHash = hashPassword(defaultPassword);
+            
+            Database.prepare('INSERT INTO admins (username, password_hash) VALUES (?, ?)')
+                .run(defaultUsername, passwordHash);
+            
+            console.log(`Default admin created: ${defaultUsername} / ${defaultPassword}`);
+            console.log('Please change the password after first login!');
+        }
+
         console.log('Database initialized successfully.');
-    } catch ( error ) {
+    } catch (error) {
         console.error('Failed to initialize database:', error);
         throw error;
     }
+}
+
+export function hashPassword(password: string): string {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+export function verifyPassword(password: string, hash: string): boolean {
+    const passwordHash = hashPassword(password);
+    return passwordHash === hash;
 }

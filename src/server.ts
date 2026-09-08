@@ -38,5 +38,5 @@ const server = http.createServer(
 ); 
 
 server.listen(PORT, HOST, () => {
-    console.log("The server start listening on port 4080. http://localhost:4080/");
+    console.log(`The server started listening on port ${PORT}. http://localhost:${PORT}/`);
 });

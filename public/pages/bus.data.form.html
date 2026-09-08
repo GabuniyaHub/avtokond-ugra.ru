@@ -48,6 +48,12 @@
         .btn-refresh { background: #1e293b; transition: background 0.2s; white-space: nowrap; }
         .btn-refresh:hover { background: #0f172a; }
         .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #2563eb; transition: background 0.2s; white-space: nowrap; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; transition: background 0.2s; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-edit { background: #f59e0b; transition: background 0.2s; }
+        .btn-edit:hover { background: #d97706; }
         .toast { position: fixed; bottom: 2rem; right: 2rem; background: #1e293b; color: white; padding: 0.75rem 1.5rem; border-radius: 9999px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); font-weight: 500; z-index: 999; opacity: 0; transform: translateY(20px); transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.error { background: #b91c1c; }
@@ -58,6 +64,30 @@
         .empty-state { 
             color: #94a3b8; 
             padding: 4rem 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         /* -------- АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ -------- */
@@ -99,6 +129,13 @@
                 font-size: 0.65rem;
                 padding: 2px 8px;
             }
+            .admin-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .admin-buttons button {
+                width: 100%;
+            }
         }
 
         @media (max-width: 480px) {
@@ -134,10 +171,16 @@
                 <a href="https://avtokond-ugra.ru" class="text-2xl font-bold text-gray-800">Автоконд</a>
                 
                 <!-- Навигация для десктопа -->
-                <nav class="desktop-nav hidden md:flex space-x-6">
+                <nav class="desktop-nav hidden md:flex space-x-6 items-center">
                     <a href="https://avtokond-ugra.ru" class="text-gray-600 hover:text-gray-800 font-medium">
                         <i class="fas fa-home mr-1"></i> Главная
                     </a>
+                    <button id="loginBtn" class="text-gray-600 hover:text-gray-800 font-medium">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Войти
+                    </button>
+                    <button id="logoutBtn" class="hidden text-gray-600 hover:text-gray-800 font-medium">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Выйти
+                    </button>
                 </nav>
                 
                 <!-- Бургер-меню для мобильных и планшетов -->
@@ -152,6 +195,12 @@
                     <a href="https://avtokond-ugra.ru/" class="text-gray-700 hover:text-gray-900 transition py-2 flex items-center">
                         <i class="fas fa-home mr-3"></i> На главную
                     </a>
+                    <button id="mobileLoginBtn" class="text-gray-700 hover:text-gray-900 transition py-2 flex items-center">
+                        <i class="fas fa-sign-in-alt mr-3"></i> Войти
+                    </button>
+                    <button id="mobileLogoutBtn" class="hidden text-gray-700 hover:text-gray-900 transition py-2 flex items-center">
+                        <i class="fas fa-sign-out-alt mr-3"></i> Выйти
+                    </button>
                 </nav>
             </div>
         </div>
@@ -159,18 +208,28 @@
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="py-12 px-4">
-        <div class="max-w-5xl mx-auto"> <!-- ← УМЕРЕННАЯ ШИРИНА: max-w-5xl вместо max-w-7xl -->
+        <div class="max-w-5xl mx-auto">
 
             <div class="flex justify-between items-center mb-6 header-flex">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-800">Список автобусов</h2>
                     <p class="text-sm text-gray-500 mt-1">Все записи из системы</p>
                 </div>
-                <button id="refreshBtn" class="btn-refresh text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow-md transition">
-                    <i class="fas fa-sync-alt"></i>
-                    <span id="refreshText">Обновить</span>
-                    <span id="refreshSpinner" class="hidden"><span class="spinner"></span></span>
-                </button>
+                <div class="flex gap-2">
+                    <button id="refreshBtn" class="btn-refresh text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow-md transition">
+                        <i class="fas fa-sync-alt"></i>
+                        <span id="refreshText">Обновить</span>
+                        <span id="refreshSpinner" class="hidden"><span class="spinner"></span></span>
+                    </button>
+                    <button id="addBtn" class="hidden btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow-md transition">
+                        <i class="fas fa-plus"></i>
+                        Добавить
+                    </button>
+                    <button id="deleteAllBtn" class="hidden btn-danger text-white px-5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow-md transition">
+                        <i class="fas fa-trash"></i>
+                        Удалить все
+                    </button>
+                </div>
             </div>
 
             <!-- ТАБЛИЦА -->
@@ -184,11 +243,12 @@
                                 <th class="px-6 py-3 text-left">Дата и время</th>
                                 <th class="px-6 py-3 text-left">Собственник</th>
                                 <th class="px-6 py-3 text-left">Гос. номер</th>
+                                <th id="actionsHeader" class="hidden px-6 py-3 text-left">Действия</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
                             <tr>
-                                <td colspan="5" class="text-center empty-state">
+                                <td colspan="6" class="text-center empty-state">
                                     <i class="fas fa-circle-notch fa-2x mb-3 text-gray-300"></i>
                                     <p class="text-gray-400">Загрузка данных...</p>
                                 </td>
@@ -224,9 +284,70 @@
     <!-- TOAST -->
     <div id="toast" class="toast"><i class="fas fa-check-circle mr-2"></i> <span id="toastMessage">Успешно</span></div>
 
+    <!-- Модальное окно для входа -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Вход для администратора</h3>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Логин</label>
+                    <input type="text" id="loginUsername" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-primary text-white px-4 py-2 rounded-lg text-sm font-medium">Войти</button>
+                    <button type="button" id="cancelLoginBtn" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 id="editModalTitle" class="text-2xl font-bold text-gray-800 mb-4">Добавить запись</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Модель, марка</label>
+                    <input type="text" id="editModel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Категория</label>
+                    <input type="text" id="editCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Дата и время</label>
+                    <input type="datetime-local" id="editDatetime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Собственник</label>
+                    <input type="text" id="editOwner" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Гос. номер</label>
+                    <input type="text" id="editRegNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-primary text-white px-4 py-2 rounded-lg text-sm font-medium">Сохранить</button>
+                    <button type="button" id="cancelEditBtn" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         (function() {
             "use strict";
+
+            // Глобальные переменные
+            let authToken = localStorage.getItem('authToken');
+            let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            let isEditing = false;
+            let editingId = null;
 
             // Мобильное меню
             const menuBtn = document.querySelector('.mobile-menu-btn');
@@ -255,6 +376,47 @@
             const refreshBtn = document.getElementById('refreshBtn');
             const refreshText = document.getElementById('refreshText');
             const refreshSpinner = document.getElementById('refreshSpinner');
+            const addBtn = document.getElementById('addBtn');
+            const deleteAllBtn = document.getElementById('deleteAllBtn');
+            const actionsHeader = document.getElementById('actionsHeader');
+
+            // Элементы модальных окон
+            const loginModal = document.getElementById('loginModal');
+            const editModal = document.getElementById('editModal');
+            const loginForm = document.getElementById('loginForm');
+            const editForm = document.getElementById('editForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+            const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+
+            // Функция обновления UI при авторизации
+            function updateAuthUI() {
+                const isAuthenticated = !!authToken;
+                
+                if (isAuthenticated) {
+                    loginBtn.classList.add('hidden');
+                    logoutBtn.classList.remove('hidden');
+                    mobileLoginBtn.classList.add('hidden');
+                    mobileLogoutBtn.classList.remove('hidden');
+                    addBtn.classList.remove('hidden');
+                    deleteAllBtn.classList.remove('hidden');
+                    actionsHeader.classList.remove('hidden');
+                } else {
+                    loginBtn.classList.remove('hidden');
+                    logoutBtn.classList.add('hidden');
+                    mobileLoginBtn.classList.remove('hidden');
+                    mobileLogoutBtn.classList.add('hidden');
+                    addBtn.classList.add('hidden');
+                    deleteAllBtn.classList.add('hidden');
+                    actionsHeader.classList.add('hidden');
+                }
+                
+                // Перерисовка таблицы
+                if (typeof loadData === 'function') {
+                    loadData(false);
+                }
+            }
 
             // Загрузка данных
             async function loadData(showLoading = true) {
@@ -281,14 +443,18 @@
                     }
 
                     renderTable(data);
-                    showToast('Данные обновлены');
+                    if (showLoading) {
+                        showToast('Данные обновлены');
+                    }
 
                 } catch (error) {
                     console.error('Ошибка загрузки:', error);
-                    showToast('Ошибка загрузки данных', 'error');
+                    if (showLoading) {
+                        showToast('Ошибка загрузки данных', 'error');
+                    }
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="5" class="text-center empty-state">
+                            <td colspan="6" class="text-center empty-state">
                                 <i class="fas fa-exclamation-triangle text-2xl mb-3 text-red-300"></i>
                                 <p class="text-gray-400">Не удалось загрузить данные</p>
                             </td>
@@ -306,7 +472,7 @@
                 if (!records || records.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="5" class="text-center empty-state">
+                            <td colspan="6" class="text-center empty-state">
                                 <i class="fas fa-inbox text-2xl mb-3 text-gray-300"></i>
                                 <p class="text-gray-400">Нет записей</p>
                             </td>
@@ -315,6 +481,7 @@
                     return;
                 }
 
+                const isAuthenticated = !!authToken;
                 let html = '';
                 records.forEach(item => {
                     const model = item.model || item.marka || item['Модель, марка'] || '—';
@@ -327,9 +494,21 @@
                         <tr class="border-b border-gray-100">
                             <td class="px-6 py-3.5 font-medium">${model}</td>
                             <td class="px-6 py-3.5"><span class="badge">${category}</span></td>
-                            <td class="px-6 py-3.5">${datetime}</td>
+                            <td class="px-6 py-3.5">${formatDate(datetime)}</td>
                             <td class="px-6 py-3.5">${owner}</td>
                             <td class="px-6 py-3.5 font-mono text-xs">${regNumber}</td>
+                            ${isAuthenticated ? `
+                            <td class="px-6 py-3.5">
+                                <div class="flex gap-2">
+                                    <button onclick="editRecord(${item.id})" class="btn-edit text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteRecord(${item.id})" class="btn-danger text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            ` : ''}
                         </tr>
                     `;
                 });
@@ -337,11 +516,251 @@
                 tbody.innerHTML = html;
             }
 
+            function formatDate(dateString) {
+                if (!dateString || dateString === '—') return dateString;
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleString('ru-RU', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch {
+                    return dateString;
+                }
+            }
+
+            // Функции для CRUD операций
+            window.editRecord = function(id) {
+                isEditing = true;
+                editingId = id;
+                document.getElementById('editModalTitle').textContent = 'Редактировать запись';
+                
+                // Найти данные в таблице
+                const records = window.currentRecords || [];
+                const record = records.find(r => r.id === id);
+                
+                if (record) {
+                    document.getElementById('editId').value = id;
+                    document.getElementById('editModel').value = record.model || '';
+                    document.getElementById('editCategory').value = record.category || '';
+                    document.getElementById('editDatetime').value = formatDateTimeLocal(record.datetime);
+                    document.getElementById('editOwner').value = record.owner || '';
+                    document.getElementById('editRegNumber').value = record.regNumber || '';
+                }
+                
+                editModal.classList.add('active');
+            };
+
+            window.deleteRecord = async function(id) {
+                if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/v1/bus-data/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        showToast('Запись удалена');
+                        loadData(false);
+                    } else {
+                        const error = await response.json();
+                        showToast(error.error || 'Ошибка при удалении', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting record:', error);
+                    showToast('Ошибка при удалении', 'error');
+                }
+            };
+
+            function formatDateTimeLocal(dateString) {
+                if (!dateString) return '';
+                try {
+                    const date = new Date(dateString);
+                    return date.toISOString().slice(0, 16);
+                } catch {
+                    return '';
+                }
+            }
+
+            // Обработка формы входа
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+
+                try {
+                    const response = await fetch('/api/v1/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        authToken = data.token;
+                        currentUser = data.user;
+                        localStorage.setItem('authToken', authToken);
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        
+                        loginModal.classList.remove('active');
+                        loginForm.reset();
+                        updateAuthUI();
+                        showToast('Вход выполнен успешно');
+                    } else {
+                        showToast(data.error || 'Ошибка входа', 'error');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showToast('Ошибка входа', 'error');
+                }
+            });
+
+            // Обработка выхода
+            function logout() {
+                authToken = null;
+                currentUser = null;
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+                updateAuthUI();
+                showToast('Выход выполнен');
+            }
+
+            logoutBtn.addEventListener('click', logout);
+            mobileLogoutBtn.addEventListener('click', logout);
+
+            // Открытие модального окна входа
+            loginBtn.addEventListener('click', () => loginModal.classList.add('active'));
+            mobileLoginBtn.addEventListener('click', () => {
+                loginModal.classList.add('active');
+                mobileMenu.classList.add('hidden');
+            });
+
+            document.getElementById('cancelLoginBtn').addEventListener('click', () => {
+                loginModal.classList.remove('active');
+                loginForm.reset();
+            });
+
+            // Обработка формы редактирования
+            editForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const data = {
+                    model: document.getElementById('editModel').value,
+                    category: document.getElementById('editCategory').value,
+                    datetime: document.getElementById('editDatetime').value,
+                    owner: document.getElementById('editOwner').value,
+                    regNumber: document.getElementById('editRegNumber').value
+                };
+
+                try {
+                    let response;
+                    if (isEditing && editingId) {
+                        response = await fetch(`/api/v1/bus-data/${editingId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`
+                            },
+                            body: JSON.stringify(data)
+                        });
+                    } else {
+                        response = await fetch('/api/v1/bus-data', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`
+                            },
+                            body: JSON.stringify(data)
+                        });
+                    }
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        editModal.classList.remove('active');
+                        editForm.reset();
+                        loadData(false);
+                        showToast(isEditing ? 'Запись обновлена' : 'Запись создана');
+                    } else {
+                        showToast(result.error || 'Ошибка при сохранении', 'error');
+                    }
+                } catch (error) {
+                    console.error('Save error:', error);
+                    showToast('Ошибка при сохранении', 'error');
+                }
+            });
+
+            // Открытие модального окна для добавления
+            addBtn.addEventListener('click', () => {
+                isEditing = false;
+                editingId = null;
+                document.getElementById('editModalTitle').textContent = 'Добавить запись';
+                editForm.reset();
+                document.getElementById('editId').value = '';
+                editModal.classList.add('active');
+            });
+
+            document.getElementById('cancelEditBtn').addEventListener('click', () => {
+                editModal.classList.remove('active');
+                editForm.reset();
+            });
+
+            // Удаление всех записей
+            deleteAllBtn.addEventListener('click', async () => {
+                if (!confirm('Вы уверены, что хотите удалить ВСЕ записи? Это действие необратимо!')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/v1/bus-data/all', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showToast(result.message || 'Все записи удалены');
+                        loadData(false);
+                    } else {
+                        showToast(result.error || 'Ошибка при удалении', 'error');
+                    }
+                } catch (error) {
+                    console.error('Delete all error:', error);
+                    showToast('Ошибка при удалении', 'error');
+                }
+            });
+
             // Инициализация
+            updateAuthUI();
             loadData(true);
 
             // Обновление по кнопке
             refreshBtn.addEventListener('click', () => loadData(true));
+
+            // Закрытие модальных окон при клике вне
+            window.addEventListener('click', (e) => {
+                if (e.target === loginModal) {
+                    loginModal.classList.remove('active');
+                }
+                if (e.target === editModal) {
+                    editModal.classList.remove('active');
+                }
+            });
 
         })();
     </script>

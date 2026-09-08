@@ -108,38 +108,18 @@ EMAIL_TO=
 ### Публичные маршруты
 
 ```
-POST   /api/appointment/request-code      Запрос кода подтверждения
-POST   /api/appointment/verify             Подтверждение записи
-POST   /api/appointment/resend-code        Повторная отправка кода
-POST   /api/contact                        Отправка контактного сообщения
+GET     /api/v1/bus-data                   Получить все записи автобусов
 ```
 
 ### Административные маршруты (требуют авторизации)
 
 ```
-GET    /api/admin/appointments             Получить все записи
-GET    /api/admin/appointments/:id         Получить запись по ID
-PUT    /api/admin/appointments/:id/cancel  Отменить запись
-GET    /api/admin/messages                 Получить все сообщения
-DELETE /api/admin/messages/:id             Удалить сообщение
 ```
 
 ---
 
 ## 💾 База данных
 
-### Модель Appointment (Запись на техосмотр)
-- ID, ФИО, телефон, email
-- Тип и модель ТС
-- Дата и время записи
-- Статус и код верификации
-- История создания/обновления
-
-### Модель ContactMessage (Контактное сообщение)
-- ID, ФИО, email, телефон
-- Тема и текст сообщения
-- Статус (непрочитано, прочитано, отвечено)
-- Дата создания
 
 
 ---
