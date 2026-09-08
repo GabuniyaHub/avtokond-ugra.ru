@@ -61,14 +61,14 @@ export async function postBusData(req: http.IncomingMessage, res: http.ServerRes
 
 export async function updateBusData(req: http.IncomingMessage, res: http.ServerResponse, id: number) {
     try {
-        // Проверка авторизации
         if (!await authenticateRequest(req, res)) {
             return true;
         }
 
         const body = await getRequestBody(req);
+        console.log('Update request body:', body);
+        console.log('Update ID:', id);
         
-        // Проверка существования записи
         const existingBus = busService.getBusById(id);
         if (!existingBus) {
             res.writeHead(404, { 'Content-Type': 'application/json' })
@@ -77,6 +77,7 @@ export async function updateBusData(req: http.IncomingMessage, res: http.ServerR
         }
 
         const updatedBus = busService.updateBus(id, body);
+        console.log('Updated bus:', updatedBus);
         
         if (updatedBus) {
             res.writeHead(200, { 'Content-Type': 'application/json' })

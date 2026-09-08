@@ -340,430 +340,464 @@
     </div>
 
     <script>
-        (function() {
-            "use strict";
+    (function() {
+        "use strict";
 
-            // Глобальные переменные
-            let authToken = localStorage.getItem('authToken');
-            let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-            let isEditing = false;
-            let editingId = null;
+        // Глобальные переменные
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        let currentRecords = []; // Добавляем глобальную переменную для хранения записей
+        let isEditing = false;
+        let editingId = null;
 
-            // Мобильное меню
-            const menuBtn = document.querySelector('.mobile-menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (menuBtn && mobileMenu) {
-                menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
-                mobileMenu.querySelectorAll('a').forEach(link => {
-                    link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
-                });
+        // Мобильное меню
+        const menuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+            });
+        }
+
+        // Toast
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMessage');
+
+        function showToast(text, type = 'success') {
+            toastMsg.textContent = text;
+            toast.className = 'toast';
+            toast.classList.add(type === 'error' ? 'error' : 'show');
+            clearTimeout(toast._hideTimer);
+            toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // Элементы таблицы
+        const tbody = document.getElementById('tableBody');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const refreshText = document.getElementById('refreshText');
+        const refreshSpinner = document.getElementById('refreshSpinner');
+        const addBtn = document.getElementById('addBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const actionsHeader = document.getElementById('actionsHeader');
+
+        // Элементы модальных окон
+        const loginModal = document.getElementById('loginModal');
+        const editModal = document.getElementById('editModal');
+        const loginForm = document.getElementById('loginForm');
+        const editForm = document.getElementById('editForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+        const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+
+        // Функция обновления UI при авторизации
+        function updateAuthUI() {
+            const isAuthenticated = !!authToken;
+            
+            if (isAuthenticated) {
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                mobileLoginBtn.classList.add('hidden');
+                mobileLogoutBtn.classList.remove('hidden');
+                addBtn.classList.remove('hidden');
+                deleteAllBtn.classList.remove('hidden');
+                actionsHeader.classList.remove('hidden');
+            } else {
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                mobileLoginBtn.classList.remove('hidden');
+                mobileLogoutBtn.classList.add('hidden');
+                addBtn.classList.add('hidden');
+                deleteAllBtn.classList.add('hidden');
+                actionsHeader.classList.add('hidden');
+            }
+            
+            // Перерисовка таблицы
+            loadData(false);
+        }
+
+        // Загрузка данных
+        async function loadData(showLoading = true) {
+            if (showLoading) {
+                refreshBtn.disabled = true;
+                refreshText.textContent = 'Загрузка...';
+                refreshSpinner.classList.remove('hidden');
             }
 
-            // Toast
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMessage');
-
-            function showToast(text, type = 'success') {
-                toastMsg.textContent = text;
-                toast.className = 'toast';
-                toast.classList.add(type === 'error' ? 'error' : 'show');
-                clearTimeout(toast._hideTimer);
-                toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 3500);
-            }
-
-            // Элементы таблицы
-            const tbody = document.getElementById('tableBody');
-            const refreshBtn = document.getElementById('refreshBtn');
-            const refreshText = document.getElementById('refreshText');
-            const refreshSpinner = document.getElementById('refreshSpinner');
-            const addBtn = document.getElementById('addBtn');
-            const deleteAllBtn = document.getElementById('deleteAllBtn');
-            const actionsHeader = document.getElementById('actionsHeader');
-
-            // Элементы модальных окон
-            const loginModal = document.getElementById('loginModal');
-            const editModal = document.getElementById('editModal');
-            const loginForm = document.getElementById('loginForm');
-            const editForm = document.getElementById('editForm');
-            const loginBtn = document.getElementById('loginBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const mobileLoginBtn = document.getElementById('mobileLoginBtn');
-            const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-
-            // Функция обновления UI при авторизации
-            function updateAuthUI() {
-                const isAuthenticated = !!authToken;
+            try {
+                const response = await fetch('/api/v1/bus-data');
                 
-                if (isAuthenticated) {
-                    loginBtn.classList.add('hidden');
-                    logoutBtn.classList.remove('hidden');
-                    mobileLoginBtn.classList.add('hidden');
-                    mobileLogoutBtn.classList.remove('hidden');
-                    addBtn.classList.remove('hidden');
-                    deleteAllBtn.classList.remove('hidden');
-                    actionsHeader.classList.remove('hidden');
-                } else {
-                    loginBtn.classList.remove('hidden');
-                    logoutBtn.classList.add('hidden');
-                    mobileLoginBtn.classList.remove('hidden');
-                    mobileLogoutBtn.classList.add('hidden');
-                    addBtn.classList.add('hidden');
-                    deleteAllBtn.classList.add('hidden');
-                    actionsHeader.classList.add('hidden');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
+
+                let data = await response.json();
                 
-                // Перерисовка таблицы
-                if (typeof loadData === 'function') {
-                    loadData(false);
-                }
-            }
-
-            // Загрузка данных
-            async function loadData(showLoading = true) {
-                if (showLoading) {
-                    refreshBtn.disabled = true;
-                    refreshText.textContent = 'Загрузка...';
-                    refreshSpinner.classList.remove('hidden');
-                }
-
-                try {
-                    const response = await fetch('/api/v1/bus-data');
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-
-                    let data = await response.json();
-                    
+                if (!Array.isArray(data)) {
+                    data = data.data || data.records || data.items || [];
                     if (!Array.isArray(data)) {
-                        data = data.data || data.records || data.items || [];
-                        if (!Array.isArray(data)) {
-                            throw new Error('Неверный формат данных');
-                        }
+                        throw new Error('Неверный формат данных');
                     }
-
-                    renderTable(data);
-                    if (showLoading) {
-                        showToast('Данные обновлены');
-                    }
-
-                } catch (error) {
-                    console.error('Ошибка загрузки:', error);
-                    if (showLoading) {
-                        showToast('Ошибка загрузки данных', 'error');
-                    }
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="text-center empty-state">
-                                <i class="fas fa-exclamation-triangle text-2xl mb-3 text-red-300"></i>
-                                <p class="text-gray-400">Не удалось загрузить данные</p>
-                            </td>
-                        </tr>
-                    `;
-                } finally {
-                    refreshBtn.disabled = false;
-                    refreshText.textContent = 'Обновить';
-                    refreshSpinner.classList.add('hidden');
                 }
+
+                currentRecords = data; // Сохраняем записи в глобальную переменную
+                renderTable(data);
+                if (showLoading) {
+                    showToast('Данные обновлены');
+                }
+
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                if (showLoading) {
+                    showToast('Ошибка загрузки данных', 'error');
+                }
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center empty-state">
+                            <i class="fas fa-exclamation-triangle text-2xl mb-3 text-red-300"></i>
+                            <p class="text-gray-400">Не удалось загрузить данные</p>
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                refreshBtn.disabled = false;
+                refreshText.textContent = 'Обновить';
+                refreshSpinner.classList.add('hidden');
+            }
+        }
+
+        // Рендер таблицы
+        function renderTable(records) {
+            if (!records || records.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center empty-state">
+                            <i class="fas fa-inbox text-2xl mb-3 text-gray-300"></i>
+                            <p class="text-gray-400">Нет записей</p>
+                        </td>
+                    </tr>
+                `;
+                return;
             }
 
-            // Рендер таблицы
-            function renderTable(records) {
-                if (!records || records.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="text-center empty-state">
-                                <i class="fas fa-inbox text-2xl mb-3 text-gray-300"></i>
-                                <p class="text-gray-400">Нет записей</p>
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
+            const isAuthenticated = !!authToken;
+            let html = '';
+            records.forEach(item => {
+                const model = item.model || item.marka || item['Модель, марка'] || '—';
+                const category = item.category || item['Категория'] || '—';
+                const datetime = item.datetime || item['Дата и время'] || item.date || '—';
+                const owner = item.owner || item['Собственник'] || '—';
+                const regNumber = item.regNumber || item['Гос. номер'] || item.gosNumber || '—';
 
-                const isAuthenticated = !!authToken;
-                let html = '';
-                records.forEach(item => {
-                    const model = item.model || item.marka || item['Модель, марка'] || '—';
-                    const category = item.category || item['Категория'] || '—';
-                    const datetime = item.datetime || item['Дата и время'] || item.date || '—';
-                    const owner = item.owner || item['Собственник'] || '—';
-                    const regNumber = item.regNumber || item['Гос. номер'] || item.gosNumber || '—';
+                html += `
+                    <tr class="border-b border-gray-100">
+                        <td class="px-6 py-3.5 font-medium">${model}</td>
+                        <td class="px-6 py-3.5"><span class="badge">${category}</span></td>
+                        <td class="px-6 py-3.5">${formatDate(datetime)}</td>
+                        <td class="px-6 py-3.5">${owner}</td>
+                        <td class="px-6 py-3.5 font-mono text-xs">${regNumber}</td>
+                        ${isAuthenticated ? `
+                        <td class="px-6 py-3.5">
+                            <div class="flex gap-2">
+                                <button onclick="editRecord(${item.id})" class="btn-edit text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteRecord(${item.id})" class="btn-danger text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                        ` : ''}
+                    </tr>
+                `;
+            });
 
-                    html += `
-                        <tr class="border-b border-gray-100">
-                            <td class="px-6 py-3.5 font-medium">${model}</td>
-                            <td class="px-6 py-3.5"><span class="badge">${category}</span></td>
-                            <td class="px-6 py-3.5">${formatDate(datetime)}</td>
-                            <td class="px-6 py-3.5">${owner}</td>
-                            <td class="px-6 py-3.5 font-mono text-xs">${regNumber}</td>
-                            ${isAuthenticated ? `
-                            <td class="px-6 py-3.5">
-                                <div class="flex gap-2">
-                                    <button onclick="editRecord(${item.id})" class="btn-edit text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deleteRecord(${item.id})" class="btn-danger text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                            ` : ''}
-                        </tr>
-                    `;
+            tbody.innerHTML = html;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString || dateString === '—') return dateString;
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch {
+                return dateString;
+            }
+        }
+
+        function formatDateTimeLocal(dateString) {
+            if (!dateString) return '';
+            try {
+                // Преобразуем строку в формат для datetime-local
+                const date = new Date(dateString);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return '';
+            }
+        }
+
+        // Функция для редактирования записи
+        window.editRecord = function(id) {
+            console.log('Editing record with ID:', id);
+            console.log('Current records:', currentRecords);
+            
+            // Найти запись по ID
+            const record = currentRecords.find(r => r.id === id);
+            
+            if (!record) {
+                console.error('Record not found:', id);
+                showToast('Запись не найдена', 'error');
+                return;
+            }
+
+            console.log('Found record:', record);
+            
+            isEditing = true;
+            editingId = id;
+            document.getElementById('editModalTitle').textContent = 'Редактировать запись';
+            
+            // Заполняем форму данными
+            document.getElementById('editId').value = id;
+            document.getElementById('editModel').value = record.model || record.marka || '';
+            document.getElementById('editCategory').value = record.category || '';
+            
+            // Обработка даты
+            const datetimeValue = formatDateTimeLocal(record.datetime);
+            console.log('Formatted datetime:', datetimeValue);
+            document.getElementById('editDatetime').value = datetimeValue;
+            
+            document.getElementById('editOwner').value = record.owner || '';
+            document.getElementById('editRegNumber').value = record.regNumber || record['Гос. номер'] || '';
+            
+            // Показываем модальное окно
+            editModal.classList.add('active');
+            console.log('Modal should be visible now');
+        };
+
+        // Функция для удаления записи
+        window.deleteRecord = async function(id) {
+            if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/bus-data/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
                 });
 
-                tbody.innerHTML = html;
-            }
-
-            function formatDate(dateString) {
-                if (!dateString || dateString === '—') return dateString;
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleString('ru-RU', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                } catch {
-                    return dateString;
+                if (response.ok) {
+                    showToast('Запись удалена');
+                    loadData(false);
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Ошибка при удалении', 'error');
                 }
+            } catch (error) {
+                console.error('Error deleting record:', error);
+                showToast('Ошибка при удалении', 'error');
             }
+        };
 
-            // Функции для CRUD операций
-            window.editRecord = function(id) {
-                isEditing = true;
-                editingId = id;
-                document.getElementById('editModalTitle').textContent = 'Редактировать запись';
-                
-                // Найти данные в таблице
-                const records = window.currentRecords || [];
-                const record = records.find(r => r.id === id);
-                
-                if (record) {
-                    document.getElementById('editId').value = id;
-                    document.getElementById('editModel').value = record.model || '';
-                    document.getElementById('editCategory').value = record.category || '';
-                    document.getElementById('editDatetime').value = formatDateTimeLocal(record.datetime);
-                    document.getElementById('editOwner').value = record.owner || '';
-                    document.getElementById('editRegNumber').value = record.regNumber || '';
+        // Обработка формы входа
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    loginModal.classList.remove('active');
+                    loginForm.reset();
+                    updateAuthUI();
+                    showToast('Вход выполнен успешно');
+                } else {
+                    showToast(data.error || 'Ошибка входа', 'error');
                 }
-                
-                editModal.classList.add('active');
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('Ошибка входа', 'error');
+            }
+        });
+
+        // Обработка выхода
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            updateAuthUI();
+            showToast('Выход выполнен');
+        }
+
+        logoutBtn.addEventListener('click', logout);
+        mobileLogoutBtn.addEventListener('click', logout);
+
+        // Открытие модального окна входа
+        loginBtn.addEventListener('click', () => loginModal.classList.add('active'));
+        mobileLoginBtn.addEventListener('click', () => {
+            loginModal.classList.add('active');
+            mobileMenu.classList.add('hidden');
+        });
+
+        document.getElementById('cancelLoginBtn').addEventListener('click', () => {
+            loginModal.classList.remove('active');
+            loginForm.reset();
+        });
+
+        // Обработка формы редактирования
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('Form submitted');
+            
+            const id = document.getElementById('editId').value;
+            const data = {
+                model: document.getElementById('editModel').value,
+                category: document.getElementById('editCategory').value,
+                datetime: document.getElementById('editDatetime').value,
+                owner: document.getElementById('editOwner').value,
+                regNumber: document.getElementById('editRegNumber').value
             };
 
-            window.deleteRecord = async function(id) {
-                if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
-                    return;
-                }
+            console.log('Form data:', data);
+            console.log('Is editing:', isEditing, 'ID:', editingId);
 
-                try {
-                    const response = await fetch(`/api/v1/bus-data/${id}`, {
-                        method: 'DELETE',
+            try {
+                let response;
+                if (isEditing && editingId) {
+                    console.log('Updating record:', editingId);
+                    response = await fetch(`/api/v1/bus-data/${editingId}`, {
+                        method: 'PUT',
                         headers: {
+                            'Content-Type': 'application/json',
                             'Authorization': `Bearer ${authToken}`
-                        }
+                        },
+                        body: JSON.stringify(data)
                     });
-
-                    if (response.ok) {
-                        showToast('Запись удалена');
-                        loadData(false);
-                    } else {
-                        const error = await response.json();
-                        showToast(error.error || 'Ошибка при удалении', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error deleting record:', error);
-                    showToast('Ошибка при удалении', 'error');
-                }
-            };
-
-            function formatDateTimeLocal(dateString) {
-                if (!dateString) return '';
-                try {
-                    const date = new Date(dateString);
-                    return date.toISOString().slice(0, 16);
-                } catch {
-                    return '';
-                }
-            }
-
-            // Обработка формы входа
-            loginForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const username = document.getElementById('loginUsername').value;
-                const password = document.getElementById('loginPassword').value;
-
-                try {
-                    const response = await fetch('/api/v1/auth/login', {
+                } else {
+                    console.log('Creating new record');
+                    response = await fetch('/api/v1/bus-data', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
                         },
-                        body: JSON.stringify({ username, password })
+                        body: JSON.stringify(data)
                     });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        authToken = data.token;
-                        currentUser = data.user;
-                        localStorage.setItem('authToken', authToken);
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        
-                        loginModal.classList.remove('active');
-                        loginForm.reset();
-                        updateAuthUI();
-                        showToast('Вход выполнен успешно');
-                    } else {
-                        showToast(data.error || 'Ошибка входа', 'error');
-                    }
-                } catch (error) {
-                    console.error('Login error:', error);
-                    showToast('Ошибка входа', 'error');
                 }
-            });
 
-            // Обработка выхода
-            function logout() {
-                authToken = null;
-                currentUser = null;
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('currentUser');
-                updateAuthUI();
-                showToast('Выход выполнен');
+                const result = await response.json();
+                console.log('Server response:', result);
+
+                if (response.ok) {
+                    editModal.classList.remove('active');
+                    editForm.reset();
+                    await loadData(false);
+                    showToast(isEditing ? 'Запись обновлена' : 'Запись создана');
+                } else {
+                    showToast(result.error || 'Ошибка при сохранении', 'error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Ошибка при сохранении', 'error');
+            }
+        });
+
+        // Открытие модального окна для добавления
+        addBtn.addEventListener('click', () => {
+            isEditing = false;
+            editingId = null;
+            document.getElementById('editModalTitle').textContent = 'Добавить запись';
+            editForm.reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('editDatetime').value = '';
+            editModal.classList.add('active');
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            editModal.classList.remove('active');
+            editForm.reset();
+        });
+
+        // Удаление всех записей
+        deleteAllBtn.addEventListener('click', async () => {
+            if (!confirm('Вы уверены, что хотите удалить ВСЕ записи? Это действие необратимо!')) {
+                return;
             }
 
-            logoutBtn.addEventListener('click', logout);
-            mobileLogoutBtn.addEventListener('click', logout);
-
-            // Открытие модального окна входа
-            loginBtn.addEventListener('click', () => loginModal.classList.add('active'));
-            mobileLoginBtn.addEventListener('click', () => {
-                loginModal.classList.add('active');
-                mobileMenu.classList.add('hidden');
-            });
-
-            document.getElementById('cancelLoginBtn').addEventListener('click', () => {
-                loginModal.classList.remove('active');
-                loginForm.reset();
-            });
-
-            // Обработка формы редактирования
-            editForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const data = {
-                    model: document.getElementById('editModel').value,
-                    category: document.getElementById('editCategory').value,
-                    datetime: document.getElementById('editDatetime').value,
-                    owner: document.getElementById('editOwner').value,
-                    regNumber: document.getElementById('editRegNumber').value
-                };
-
-                try {
-                    let response;
-                    if (isEditing && editingId) {
-                        response = await fetch(`/api/v1/bus-data/${editingId}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${authToken}`
-                            },
-                            body: JSON.stringify(data)
-                        });
-                    } else {
-                        response = await fetch('/api/v1/bus-data', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${authToken}`
-                            },
-                            body: JSON.stringify(data)
-                        });
+            try {
+                const response = await fetch('/api/v1/bus-data/all', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
                     }
+                });
 
-                    const result = await response.json();
+                const result = await response.json();
 
-                    if (response.ok) {
-                        editModal.classList.remove('active');
-                        editForm.reset();
-                        loadData(false);
-                        showToast(isEditing ? 'Запись обновлена' : 'Запись создана');
-                    } else {
-                        showToast(result.error || 'Ошибка при сохранении', 'error');
-                    }
-                } catch (error) {
-                    console.error('Save error:', error);
-                    showToast('Ошибка при сохранении', 'error');
+                if (response.ok) {
+                    showToast(result.message || 'Все записи удалены');
+                    await loadData(false);
+                } else {
+                    showToast(result.error || 'Ошибка при удалении', 'error');
                 }
-            });
+            } catch (error) {
+                console.error('Delete all error:', error);
+                showToast('Ошибка при удалении', 'error');
+            }
+        });
 
-            // Открытие модального окна для добавления
-            addBtn.addEventListener('click', () => {
-                isEditing = false;
-                editingId = null;
-                document.getElementById('editModalTitle').textContent = 'Добавить запись';
-                editForm.reset();
-                document.getElementById('editId').value = '';
-                editModal.classList.add('active');
-            });
+        // Инициализация
+        updateAuthUI();
+        loadData(true);
 
-            document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        // Обновление по кнопке
+        refreshBtn.addEventListener('click', () => loadData(true));
+
+        // Закрытие модальных окон при клике вне
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                loginModal.classList.remove('active');
+            }
+            if (e.target === editModal) {
                 editModal.classList.remove('active');
                 editForm.reset();
-            });
+            }
+        });
 
-            // Удаление всех записей
-            deleteAllBtn.addEventListener('click', async () => {
-                if (!confirm('Вы уверены, что хотите удалить ВСЕ записи? Это действие необратимо!')) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch('/api/v1/bus-data/all', {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`
-                        }
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        showToast(result.message || 'Все записи удалены');
-                        loadData(false);
-                    } else {
-                        showToast(result.error || 'Ошибка при удалении', 'error');
-                    }
-                } catch (error) {
-                    console.error('Delete all error:', error);
-                    showToast('Ошибка при удалении', 'error');
-                }
-            });
-
-            // Инициализация
-            updateAuthUI();
-            loadData(true);
-
-            // Обновление по кнопке
-            refreshBtn.addEventListener('click', () => loadData(true));
-
-            // Закрытие модальных окон при клике вне
-            window.addEventListener('click', (e) => {
-                if (e.target === loginModal) {
-                    loginModal.classList.remove('active');
-                }
-                if (e.target === editModal) {
-                    editModal.classList.remove('active');
-                }
-            });
-
-        })();
-    </script>
+    })();
+</script>
 
 </body>
 </html>
